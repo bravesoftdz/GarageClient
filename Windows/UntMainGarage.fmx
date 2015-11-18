@@ -1,0 +1,56 @@
+object Form2: TForm2
+  Left = 0
+  Top = 0
+  Caption = 'Form2'
+  ClientHeight = 113
+  ClientWidth = 466
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  OnShow = FormShow
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object BtnOpen: TButton
+    Height = 22.000000000000000000
+    Position.X = 32.000000000000000000
+    Position.Y = 56.000000000000000000
+    TabOrder = 0
+    Text = 'Open'
+    Width = 80.000000000000000000
+    OnClick = BtnOpenClick
+  end
+  object EdtState: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 1
+    Position.X = 32.000000000000000000
+    Position.Y = 24.000000000000000000
+    Width = 345.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object BtnClose: TButton
+    Height = 22.000000000000000000
+    Position.X = 128.000000000000000000
+    Position.Y = 56.000000000000000000
+    TabOrder = 2
+    Text = 'Close'
+    Width = 80.000000000000000000
+    OnClick = BtnCloseClick
+  end
+  object Timer1: TTimer
+    OnTimer = Timer1Timer
+    Left = 320
+    Top = 64
+  end
+  object XMLDocument1: TXMLDocument
+    XML.Strings = (
+      '')
+    Left = 392
+    Top = 72
+    DOMVendorDesc = 'ADOM XML v4'
+  end
+end

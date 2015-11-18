@@ -1,0 +1,355 @@
+object FrmMainAdmin: TFrmMainAdmin
+  Left = 0
+  Top = 0
+  Caption = 'Arduino Mobile Admin '
+  ClientHeight = 627
+  ClientWidth = 505
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object EdtIpAddress: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 12
+    Position.X = 128.000000000000000000
+    Position.Y = 8.000000000000000000
+    Width = 100.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object DlgSave: TSaveDialog
+    DefaultExt = 'cfg'
+    Filter = '*.cfg'
+    Title = 'Open Config file'
+    Left = 248
+    Top = 528
+  end
+  object BtnSaveToSD: TButton
+    Height = 22.000000000000000000
+    Position.X = 24.000000000000000000
+    Position.Y = 528.000000000000000000
+    TabOrder = 11
+    Text = 'Save to SD'
+    Width = 89.000000000000000000
+    OnClick = BtnSaveToSDClick
+  end
+  object BtnLoadFromSD: TButton
+    Height = 22.000000000000000000
+    Position.X = 128.000000000000000000
+    Position.Y = 528.000000000000000000
+    TabOrder = 4
+    Text = 'Load from SD'
+    Width = 89.000000000000000000
+    OnClick = BtnLoadFromSDClick
+  end
+  object BtnGenerateSipKey: TButton
+    Height = 22.000000000000000000
+    Position.X = 400.000000000000000000
+    Position.Y = 248.000000000000000000
+    TabOrder = 1
+    Text = 'Generate'
+    Width = 73.000000000000000000
+    OnClick = BtnGenerateSipKeyClick
+  end
+  object EdtSipKey: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 3
+    ReadOnly = True
+    Position.X = 128.000000000000000000
+    Position.Y = 248.000000000000000000
+    Width = 265.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object Label3: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 251.000000000000000000
+    Text = 'SipHash Key'
+    Width = 120.000000000000000000
+  end
+  object EdtWlanKey: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 0
+    Position.X = 128.000000000000000000
+    Position.Y = 220.000000000000000000
+    Width = 193.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object Label5: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 223.000000000000000000
+    Text = 'WLAN Key'
+    Width = 120.000000000000000000
+  end
+  object Label4: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 193.000000000000000000
+    Text = 'Network SSID'
+    Width = 120.000000000000000000
+  end
+  object Label2: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 11.000000000000000000
+    Text = 'IP Address'
+    Width = 120.000000000000000000
+  end
+  object Connect: TButton
+    Height = 22.000000000000000000
+    Position.X = 248.000000000000000000
+    Position.Y = 8.000000000000000000
+    TabOrder = 2
+    Text = 'Connect'
+    Width = 80.000000000000000000
+  end
+  object EdtSSID: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 13
+    Position.X = 128.000000000000000000
+    Position.Y = 190.000000000000000000
+    Width = 193.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object Panel2: TPanel
+    Height = 241.000000000000000000
+    Position.X = 312.000000000000000000
+    Position.Y = 280.000000000000000000
+    Width = 161.000000000000000000
+    TabOrder = 9
+    object Label9: TLabel
+      Height = 17.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 8.000000000000000000
+      Text = 'Name'
+      Width = 120.000000000000000000
+    end
+    object EdtName: TEdit
+      Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+      TabOrder = 0
+      Position.X = 8.000000000000000000
+      Position.Y = 24.000000000000000000
+      Width = 100.000000000000000000
+      Height = 22.000000000000000000
+      KillFocusByReturn = False
+      OnChange = EdtNameChange
+    end
+    object Label10: TLabel
+      Height = 17.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 104.000000000000000000
+      Text = 'Id'
+      Width = 120.000000000000000000
+    end
+    object Label11: TLabel
+      Height = 17.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 56.000000000000000000
+      Text = 'Password'
+      Width = 120.000000000000000000
+    end
+    object EdtPassword: TNumberBox
+      Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+      TabOrder = 1
+      Cursor = crIBeam
+      Max = 99999.000000000000000000
+      Value = 1000.000000000000000000
+      KeyboardType = vktDefault
+      Position.X = 8.000000000000000000
+      Position.Y = 72.000000000000000000
+      Width = 100.000000000000000000
+      Height = 22.000000000000000000
+      VertIncrement = 5.000000000000000000
+      OnChange = EdtPasswordChange
+    end
+    object EdtId: TNumberBox
+      Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+      TabOrder = 2
+      Cursor = crIBeam
+      KeyboardType = vktDefault
+      Position.X = 8.000000000000000000
+      Position.Y = 120.000000000000000000
+      Width = 100.000000000000000000
+      Height = 22.000000000000000000
+      VertIncrement = 5.000000000000000000
+      OnChange = EdtIdChange
+    end
+    object Panel1: TGroupBox
+      Height = 89.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 144.000000000000000000
+      Text = ' '
+      Width = 137.000000000000000000
+      TabOrder = 6
+      object RdbUnused: TRadioButton
+        GroupName = 'GrpUser'
+        Height = 19.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 16.000000000000000000
+        RotationCenter.X = 3.000000000000000000
+        RotationCenter.Y = 3.000000000000000000
+        TabOrder = 0
+        Text = 'Unused'
+        Width = 120.000000000000000000
+        OnClick = RdbUnusedClick
+      end
+      object RdbUser: TRadioButton
+        Tag = 1
+        GroupName = 'GrpUser'
+        Height = 19.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 40.000000000000000000
+        RotationCenter.X = 21.000000000000000000
+        TabOrder = 1
+        Text = 'User'
+        Width = 120.000000000000000000
+        OnClick = RdbUnusedClick
+      end
+      object RdbAdmin: TRadioButton
+        Tag = 2
+        GroupName = 'GrpUser'
+        Height = 19.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 64.000000000000000000
+        TabOrder = 2
+        Text = 'Admin'
+        Width = 120.000000000000000000
+        OnClick = RdbUnusedClick
+      end
+    end
+  end
+  object DlgOpen: TOpenDialog
+    DefaultExt = 'cfg'
+    Filter = '*.cfg'
+    Left = 304
+    Top = 528
+  end
+  object GrdUsers: TGrid
+    EnableDragHighlight = False
+    Height = 241.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 280.000000000000000000
+    TabOrder = 7
+    Width = 241.000000000000000000
+    AlternatingRowBackground = True
+    ReadOnly = True
+    RowCount = 10
+    RowHeight = 21.000000000000000000
+    OnGetValue = GrdUsersGetValue
+    OnSelChanged = GrdUsersSelChanged
+    object ClmNo: TColumn
+      Header = 'No'
+      Height = 210.000000000000000000
+      TabOrder = 0
+      Width = 30.000000000000000000
+    end
+    object ClmName: TColumn
+      Header = 'Name'
+      Height = 210.000000000000000000
+      Position.X = 30.000000000000000000
+      TabOrder = 1
+      Width = 100.000000000000000000
+    end
+    object ClmState: TColumn
+      Header = 'State'
+      Height = 210.000000000000000000
+      Position.X = 130.000000000000000000
+      TabOrder = 2
+      Width = 100.000000000000000000
+    end
+  end
+  object Label1: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 96.000000000000000000
+    Text = 'Net mask'
+    Width = 120.000000000000000000
+  end
+  object Label6: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 123.000000000000000000
+    Text = 'Gateway'
+    Width = 120.000000000000000000
+  end
+  object Label7: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 149.000000000000000000
+    Text = 'DNS Server'
+    Width = 120.000000000000000000
+  end
+  object Label8: TLabel
+    Height = 17.000000000000000000
+    Position.X = 16.000000000000000000
+    Position.Y = 43.000000000000000000
+    Text = 'DHCP'
+    Width = 120.000000000000000000
+  end
+  object Panel3: TGroupBox
+    Height = 57.000000000000000000
+    Position.X = 120.000000000000000000
+    Position.Y = 32.000000000000000000
+    Text = ' '
+    Width = 121.000000000000000000
+    TabOrder = 17
+    object RdbFixedIp: TRadioButton
+      GroupName = 'GrpDhcp'
+      Height = 19.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 12.000000000000000000
+      TabOrder = 0
+      Text = 'Fixed Ip'
+      Width = 120.000000000000000000
+      OnClick = RdbAutomaticClick
+    end
+    object RdbAutomatic: TRadioButton
+      GroupName = 'GrpDhcp'
+      Height = 19.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 32.000000000000000000
+      TabOrder = 1
+      Text = 'Automatic'
+      Width = 120.000000000000000000
+      OnClick = RdbAutomaticClick
+    end
+  end
+  object EdtDnsServer: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 19
+    Position.X = 128.000000000000000000
+    Position.Y = 147.000000000000000000
+    Width = 100.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object EdtGateway: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 20
+    Position.X = 128.000000000000000000
+    Position.Y = 120.000000000000000000
+    Width = 100.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+  object EdtNetMask: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 21
+    Position.X = 128.000000000000000000
+    Position.Y = 94.000000000000000000
+    Width = 100.000000000000000000
+    Height = 22.000000000000000000
+    KillFocusByReturn = False
+  end
+end

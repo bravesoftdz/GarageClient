@@ -1,0 +1,14 @@
+﻿[GroupBox1]
+Coordinates=10,10,70,69
+Visible=True
+ExplicitSubNodes=Height
+
+[]
+Coordinates=190,1,82,33
+
+[EdtStatus]
+Coordinates=99,71,40,51
+
+[BtnOpen]
+Coordinates=99,1,53,51
+

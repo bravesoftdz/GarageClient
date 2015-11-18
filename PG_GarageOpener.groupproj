@@ -1,0 +1,60 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{712262B9-E36C-4B05-9AE1-3B0271FA087A}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="GarageOpener.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Windows\WinGarageOpener.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="GarageAdmin.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="GarageOpener">
+        <MSBuild Projects="GarageOpener.dproj"/>
+    </Target>
+    <Target Name="GarageOpener:Clean">
+        <MSBuild Projects="GarageOpener.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="GarageOpener:Make">
+        <MSBuild Projects="GarageOpener.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="WinGarageOpener">
+        <MSBuild Projects="Windows\WinGarageOpener.dproj"/>
+    </Target>
+    <Target Name="WinGarageOpener:Clean">
+        <MSBuild Projects="Windows\WinGarageOpener.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="WinGarageOpener:Make">
+        <MSBuild Projects="Windows\WinGarageOpener.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="GarageAdmin">
+        <MSBuild Projects="GarageAdmin.dproj"/>
+    </Target>
+    <Target Name="GarageAdmin:Clean">
+        <MSBuild Projects="GarageAdmin.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="GarageAdmin:Make">
+        <MSBuild Projects="GarageAdmin.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="GarageOpener;WinGarageOpener;GarageAdmin"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="GarageOpener:Clean;WinGarageOpener:Clean;GarageAdmin:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="GarageOpener:Make;WinGarageOpener:Make;GarageAdmin:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
