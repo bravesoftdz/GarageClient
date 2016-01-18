@@ -1,0 +1,54 @@
+object FrmConnectArduino: TFrmConnectArduino
+  Left = 0
+  Top = 0
+  Caption = 'Connect to Arduino'
+  ClientHeight = 93
+  ClientWidth = 245
+  Position = poMainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object CmbUser: TComboBox
+    DisableFocusEffect = False
+    Height = 22.000000000000000000
+    Position.X = 96.000000000000000000
+    Position.Y = 16.000000000000000000
+    TabOrder = 0
+    Width = 137.000000000000000000
+  end
+  object Label1: TLabel
+    Height = 17.000000000000000000
+    Position.X = 8.000000000000000000
+    Position.Y = 16.000000000000000000
+    Text = 'User'
+    Width = 120.000000000000000000
+  end
+  object BtnConnect: TButton
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Default = True
+    Height = 22.000000000000000000
+    Position.X = 64.000000000000000000
+    Position.Y = 56.000000000000000000
+    TabOrder = 2
+    Text = 'Connect'
+    Width = 80.000000000000000000
+    OnClick = BtnConnectClick
+  end
+  object BtnCancel: TButton
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Cancel = True
+    Height = 22.000000000000000000
+    Position.X = 152.000000000000000000
+    Position.Y = 56.000000000000000000
+    TabOrder = 3
+    Text = 'Cancel'
+    Width = 80.000000000000000000
+    OnClick = BtnCancelClick
+  end
+end

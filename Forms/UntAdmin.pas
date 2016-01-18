@@ -6,11 +6,28 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Graphics, FMX.Controls, FMX.Forms, FMX.Dialogs, FMX.StdCtrls,
   System.Rtti, FMX.Grid, FMX.Layouts, FMX.Edit, FMX.TabControl,
-  system.StrUtils,
+  system.StrUtils, system.IniFiles, System.IOUtils,
+  IntfCommandHandler,
+  CommunicationTypes,
+  CommunicationConst,
+  ConfigConst,
+  UntFrmConnectArduino,
+  UntFrmSendUsers,
+  UntCmdConnect,
+  UntCommand,
+  UntCommunicationFactory,
+  UntClientSession,
+  UntArduinoCommunication,
   UntSipHash,
-  UntArduinoAdminData;
+  UntStringHasher,
+  UntArduinoAdminData,
+  UntUserDlg,
+  UntAssignDevice;
 
 type
+  /// <summary>
+  /// Main form for Garage opener admin tool
+  /// </summary>
   TFrmMainAdmin = class(TForm)
     DlgSave: TSaveDialog;
     DlgOpen: TOpenDialog;
@@ -26,50 +43,124 @@ type
     EdtIpAddress: TEdit;
     Connect: TButton;
     EdtSSID: TEdit;
-    Panel2: TPanel;
-    Label9: TLabel;
-    EdtName: TEdit;
-    Label10: TLabel;
-    Label11: TLabel;
-    GrdUsers: TGrid;
-    ClmNo: TColumn;
-    ClmName: TColumn;
-    ClmState: TColumn;
-    EdtPassword: TNumberBox;
-    EdtId: TNumberBox;
     Label1: TLabel;
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
-    Panel1: TGroupBox;
-    RdbUnused: TRadioButton;
-    RdbUser: TRadioButton;
-    RdbAdmin: TRadioButton;
     Panel3: TGroupBox;
     RdbFixedIp: TRadioButton;
     RdbAutomatic: TRadioButton;
     EdtNetMask: TEdit;
     EdtGateway: TEdit;
     EdtDnsServer: TEdit;
-    procedure BtnSaveToSDClick(Sender: TObject);
+    Label12: TLabel;
+    EdtMacAddress: TEdit;
+    BtnGenerateMac: TButton;
+    LblConnectState: TLabel;
+    GroupBox1: TGroupBox;
+    GrdUsers: TGrid;
+    ClmNo: TColumn;
+    ClmName: TColumn;
+    ClmState: TColumn;
+    BtnEditUser: TButton;
+    BtnAssignDevice: TButton;
+    BtnSendUsers: TButton;
+    /// <summary>
+    /// Initialize form
+    /// Load from local ini file
+    /// </summary>
     procedure FormCreate(Sender: TObject);
+    /// <summary>
+    /// Save config data to local ini file
+    /// Destroy owned objects
+    /// </summary>
     procedure FormDestroy(Sender: TObject);
+    /// <summary>
+    /// Generate a random secret SIP key
+    /// </summary>
     procedure BtnGenerateSipKeyClick(Sender: TObject);
+    /// <summary>
+    /// Save configuration to file - on SD card
+    /// </summary>
+    procedure BtnSaveToSDClick(Sender: TObject);
+    /// <summary>
+    /// Load configuration from file - on SD card
+    /// </summary>
     procedure BtnLoadFromSDClick(Sender: TObject);
-    procedure GrdUsersGetValue(Sender: TObject; const Col, Row: Integer;
-      var Value: TValue);
+    /// <summary>
+    /// Get user data record from current selection in user grid
+    /// </summary>
+    procedure GrdUsersGetValue(Sender: TObject; const Col, Row: Integer; var Value: TValue);
+    /// <summary>
+    /// Register change in current user selection - sets the CurrentUserRow field
+    /// </summary>
     procedure GrdUsersSelChanged(Sender: TObject);
-    procedure EdtNameChange(Sender: TObject);
-    procedure EdtPasswordChange(Sender: TObject);
-    procedure EdtIdChange(Sender: TObject);
-    procedure RdbUnusedClick(Sender: TObject);
+    /// <summary>
+    /// DHCP/Fixed IP radio buttons have been set
+    /// </summary>
     procedure RdbAutomaticClick(Sender: TObject);
+    /// <summary>
+    /// Generate a MAC address
+    /// </summary>
+    procedure BtnGenerateMacClick(Sender: TObject);
+    /// <summary>
+    /// Edit the currently selecte user
+    /// </summary>
+    procedure BtnEditUserClick(Sender: TObject);
+    /// <summary>
+    /// Assign a device to the currently selecte user
+    /// Opens the device assinging dialog
+    /// </summary>
+    procedure BtnAssignDeviceClick(Sender: TObject);
+    /// <summary>
+    /// Send all user records to Arduino
+    /// </summary>
+    procedure BtnSendUsersClick(Sender: TObject);
+    /// <summary>
+    /// Open IP connection to Arduino and start a session
+    /// </summary>
+    procedure ConnectClick(Sender: TObject);
   private
+    /// <summary>
+    /// Index of currently selecte user record
+    /// </summary>
     CurrentUserRow : integer;
+    /// <summary>
+    /// Has been successfully connected to the Arduino
+    /// </summary>
+    FConnected : boolean;
+    /// <summary>
+    /// The Admin data instance
+    /// </summary>
     AdminData : TArduinoAdminData;{ Private declarations }
-    function ExtractIP (IpText : string; Force : boolean = true) : Cardinal;
-    function IpToText(Ip: Cardinal): string;
+    /// <summary>
+    /// The communication object
+    /// </summary>
+    ArduinoCommunication : TArduinoCommunication;
+    /// <summary>
+    /// The grid row has been changed - update display
+    /// </summary>
     procedure UpdateGridRow(Row : integer);
+    /// <summary>
+    /// Get the local ini file for my configuration
+    /// </summary>
+    function GetIniFile: TCustomIniFile;
+    /// <summary>
+    /// Get the file name for the ini file
+    /// </summary>
+    function GetIniFileName: string;
+    /// <summary>
+    /// Send changed user data to the Arduino
+    /// </summary>
+    procedure SendUserChanged(UserIdx : integer);
+    /// <summary>
+    /// Update dialog controls from ConfigData object
+    /// </summary>
+    procedure ShowAdminData;
+    /// <summary>
+    /// Has been successfully connected to the Arduino
+    /// </summary>
+    property Connected : boolean read FConnected;
   public
     { Public declarations }
   end;
@@ -81,37 +172,122 @@ implementation
 
 {$R *.fmx}
 
+procedure TFrmMainAdmin.BtnAssignDeviceClick(Sender: TObject);
+var
+  Dlg : TFrmAssignDevice;
+begin
+  // Check index
+  if not CurrentUserRow in [0..9] then
+    exit;
+
+  // Open Dialog for user assignment
+  Dlg := TFrmAssignDevice.Create(self);
+  try
+    if Dlg.Execute (AdminData, CurrentUserRow) then begin
+      // Send assignment data to Arduino
+      SendUserChanged(CurrentUserRow);
+      // Update grid
+      UpdateGridRow(CurrentUserRow);
+    end;
+  finally
+    Dlg.Free;
+  end;
+end;
+
+procedure TFrmMainAdmin.BtnEditUserClick(Sender: TObject);
+var
+  Dlg : TDlgUser;
+  User : TUserConfig;
+  Name : string;
+begin
+  // Check Index
+  if not CurrentUserRow in [0..9] then
+    exit;
+
+  // Open Edit dialog
+  Dlg := TDlgUser.Create(self);
+  try
+    User := AdminData.Users[CurrentUserRow];
+    Name := AdminData.UserName[CurrentUserRow];
+
+    if Dlg.Execute (User, Name) then begin
+      AdminData.UserKey[CurrentUserRow]  := User.userKey;
+      AdminData.UserMode[CurrentUserRow] := User.userMode;
+      AdminData.UserName[CurrentUserRow] := Name;
+
+      // Send changed data to Arduino
+      SendUserChanged(CurrentUserRow);
+      // Update display
+      UpdateGridRow(CurrentUserRow);
+    end;
+  finally
+    Dlg.Free;
+  end;
+end;
+
+procedure TFrmMainAdmin.BtnGenerateMacClick(Sender: TObject);
+begin
+  AdminData.GenerateMacAddress;
+  EdtMacAddress.Text := AdminData.MacAddressString;
+end;
+
 procedure TFrmMainAdmin.BtnGenerateSipKeyClick(Sender: TObject);
 begin
   AdminData.SipKey.Generate;
-  EdtSipKey.Text := AdminData.SipKey.ToString;
+  EdtSipKey.Text := AdminData.SipKey.AsString;
 end;
 
 procedure TFrmMainAdmin.BtnLoadFromSDClick(Sender: TObject);
 var
   FileName : string;
 begin
-    if DlgOpen.Execute then begin
-      FileName := DlgOpen.FileName;
-      AdminData.LoadFromFile(FileName);
+  if DlgOpen.Execute then begin
+    FileName := DlgOpen.FileName;
+    AdminData.LoadFromFile(FileName);
+    ShowAdminData;
+  end;
+end;
 
+procedure TFrmMainAdmin.SendUserChanged(UserIdx: integer);
+var
+  AllUsers : boolean;
+  Dlg : TFrmSendUsers;
+begin
+  // only send, if connection already existed
+  if not Connected then
+    exit;
+
+  // Send all users, if index is 0
+  AllUsers := (UserIdx < 0) or (Useridx >= EE_USER_COUNT);
+
+  // Open Send dialog for progress display and selection of responsible admin user
+  Dlg := TFrmSendUsers.Create(self);
+  try
+    Dlg.Execute(AdminData, ArduinoCommunication, UserIdx, AllUsers);
+  finally
+    Dlg.Free;
+  end;    
+end;
+
+procedure TFrmMainAdmin.ShowAdminData;
+begin
 //      EdtAdminPassword.Text := AdminData.AdminPw ;
-      EdtWlanKey.Text       := AdminData.WLanKey ;
-      EdtSSID.Text          := AdminData.SSID;
-      EdtIpAddress.Text     := IpToText(AdminData.IpAddress);
-      EdtNetMask.Text       := IpToText(AdminData.NetMask  );
-      EdtGateway.Text       := IpToText(AdminData.Gateway  );
-      EdtDnsServer.Text     := IpToText(AdminData.DnsServer);
-      EdtSipKey.Text        := AdminData.SipKey.ToString;
+  EdtWlanKey.Text       := AdminData.WLanKey ;
+  EdtSSID.Text          := AdminData.SSID;
+  EdtIpAddress.Text     := AdminData.IpAddress.AsString;
+  EdtNetMask.Text       := AdminData.NetMask.AsString  ;
+  EdtGateway.Text       := AdminData.Gateway.AsString  ;
+  EdtDnsServer.Text     := AdminData.DnsServer.AsString;
+  EdtSipKey.Text        := AdminData.SipKey.AsString;
+  EdtMacAddress.Text    := AdminData.MacAddressString;
 
-      if AdminData.UseDhcp then
-        RdbAutomatic.IsChecked := true
-      else
-        RdbFixedIp.IsChecked := true;
+  if AdminData.UseDhcp then
+    RdbAutomatic.IsChecked := true
+  else
+    RdbFixedIp.IsChecked := true;
 
-      UpdateGridRow(CurrentUserRow);
-      GrdUsersSelChanged(GrdUsers);
-    end;
+  UpdateGridRow(CurrentUserRow);
+  GrdUsersSelChanged(GrdUsers);
 end;
 
 procedure TFrmMainAdmin.BtnSaveToSDClick(Sender: TObject);
@@ -123,11 +299,12 @@ begin
     AdminData.WLanKey   := EdtWlanKey.Text;
     AdminData.SSID      := EdtSSID.Text;
     AdminData.UseDhcp   := RdbAutomatic.IsChecked;
-    AdminData.IpAddress := ExtractIP (EdtIpAddress.Text);
-    AdminData.NetMask   := ExtractIP (EdtNetMask.Text,   not AdminData.UseDhcp);
-    AdminData.Gateway   := ExtractIP (EdtGateway.Text,   not AdminData.UseDhcp);
-    AdminData.DnsServer := ExtractIP (EdtDnsServer.Text, not AdminData.UseDhcp);
-    AdminData.SipKey.ToString := EdtSipKey.Text;
+    AdminData.IpAddress.AsString := EdtIpAddress.Text;
+    AdminData.NetMask.AsString   := EdtNetMask.Text;
+    AdminData.Gateway.AsString   := EdtGateway.Text;
+    AdminData.DnsServer.AsString := EdtDnsServer.Text;
+    AdminData.MacAddressString   := EdtMacAddress.Text;
+    AdminData.SipKey.AsString    := EdtSipKey.Text;
 
     if DlgSave.Execute then begin
       FileName := DlgSave.FileName;
@@ -140,55 +317,32 @@ begin
   end;
 end;
 
-function TFrmMainAdmin.ExtractIP(IpText: string; Force : boolean = true): Cardinal;
-var
-  IP : array[0..3] of byte;
-  n  : integer;
-  dotpos : integer;
-  lastPos : integer;
-  part : string;
+procedure TFrmMainAdmin.BtnSendUsersClick(Sender: TObject);
 begin
-  try
-    lastPos := 1;
-    for n := 0 to 3 do begin
-       if n < 3 then
-         dotPos := system.strUtils.posEx('.', IpText, lastPos)
-       else
-         dotPos := length(IpText)+1;
-
-       if dotpos = 0 then
-         raise Exception.Create('Illegal IP address format');
-
-       part := System.SysUtils.Trim(copy(IpText, lastPos, dotPos - lastPos));
-       IP[3-n] := System.SysUtils.StrToIntDef(part, -1);
-       if IP[3-n] < 0 then
-         raise Exception.Create('Illegal IP address format');
-       lastPos := dotpos+1;
-    end;
-    result := cardinal(IP);
-  except
-    on E:Exception do begin
-      if Force then
-        raise
-      else
-        result := 0;
-    end;
-
-  end;
+  // use -1 as ALL-USERS
+  // ToDo usee constant here to indicate purpose
+  SendUserChanged(-1);
 end;
 
-function TFrmMainAdmin.IpToText (Ip : Cardinal) : string;
+procedure TFrmMainAdmin.ConnectClick(Sender: TObject);
 var
-  IpBytes : array[0..3] of byte absolute IP;
-  n: Integer;
+  Dlg : TFrmConnectArduino;
 begin
-  result := '';
-  for n := 3 downto 0 do begin
-    result := result + IntToStr(IpBytes[n]);
-    if n > 0 then
-       result := result + '.';
-  end;
+  // Show Connect-Dialog
+  Dlg := TFrmConnectArduino.Create(self);
+  try
+    if Dlg.Execute(AdminData, ArduinoCommunication) then begin
+      FConnected := true;
+      LblConnectState.Text := 'Connected';
+    end
+    else if not TClientSession.Instance.HasSession then begin
+      FConnected := false;       
+      LblConnectState.Text := 'Not connected';
+    end;
 
+  finally
+    Dlg.Free;
+  end;
 end;
 
 procedure TFrmMainAdmin.GrdUsersGetValue(Sender: TObject; const Col, Row: Integer; var Value: TValue);
@@ -196,70 +350,59 @@ begin
   case Col of
     0: Value := row+1;
     1: Value := AdminData.UserName[row];
-    2: Value := AdminData.UserState[row];
+    2: Value := AdminData.UserLevel[row];
   end;
 end;
 
 procedure TFrmMainAdmin.GrdUsersSelChanged(Sender: TObject);
 begin
   CurrentUserRow := GrdUsers.Selected;
-
-  if not (CurrentUserRow in [0..9]) then
-    exit;
-
-  EdtName.Text := AdminData.UserName[CurrentUserRow];
-  EdtPassword.Value := AdminData.Users[CurrentUserRow].userKey;
-  EdtId.Value := AdminData.Users[CurrentUserRow].userId;
-
-  case AdminData.Users[CurrentUserRow].userMode of
-    0: RdbUnused.IsChecked := true;
-    1: RdbUser.IsChecked := true;
-    2: RdbAdmin.IsChecked := true;
-  end;
 end;
 
-procedure TFrmMainAdmin.FormCreate(Sender: TObject);
+function TFrmMainAdmin.GetIniFileName : string;
 begin
-  AdminData := TArduinoAdminData.Create;
+  result := IncludeTrailingPathDelimiter(TPath.GetDocumentsPath()) + 'GarageAdmin.ini';
+end;
+
+function TFrmMainAdmin.GetIniFile : TCustomIniFile;
+var
+  FileName : string;
+begin
+  FileName := GetIniFileName;
+  result := TIniFile.Create(FileName);
+end;
+
+
+procedure TFrmMainAdmin.FormCreate(Sender: TObject);
+var
+  IniFile : TCustomIniFile;
+begin
+  IniFile := GetIniFile;
+  try
+    AdminData := TArduinoAdminData.Create;
+    if FileExists(GetIniFileName) then begin
+      AdminData.LoadFromIniFile(IniFile);
+      ShowAdminData;
+    end;
+  finally
+    IniFile.Free;
+  end;
+  ArduinoCommunication := TCommunicatorFactory.GetCommunicator(AdminData);
 end;
 
 procedure TFrmMainAdmin.FormDestroy(Sender: TObject);
+var
+  IniFile : TCustomIniFile;
 begin
+  IniFile := GetIniFile;
+  try
+    AdminData.SaveToIniFile(IniFile);
+  finally
+    IniFile.Free;
+  end;
   AdminData.Free;
 end;
 
-procedure TFrmMainAdmin.EdtIdChange(Sender: TObject);
-var
-  Value : integer;
-begin
-  if not (CurrentUserRow in [0..9]) then
-    exit;
-
-  Value := Round (TNumberBox(Sender).Value);
-  AdminData.UserId[CurrentUserRow] := Value;
-  UpdateGridRow(CurrentUserRow);
-end;
-
-procedure TFrmMainAdmin.EdtNameChange(Sender: TObject);
-begin
-  if not (CurrentUserRow in [0..9]) then
-    exit;
-
-  AdminData.UserName[CurrentUserRow] := EdtName.Text;
-  UpdateGridRow(CurrentUserRow);
-end;
-
-procedure TFrmMainAdmin.EdtPasswordChange(Sender: TObject);
-var
-  Value : integer;
-begin
-  if not (CurrentUserRow in [0..9]) then
-    exit;
-
-  Value := Round (TNumberBox(Sender).Value);
-  AdminData.UserKey[CurrentUserRow] := Value;
-  UpdateGridRow(CurrentUserRow);
-end;
 
 procedure TFrmMainAdmin.RdbAutomaticClick(Sender: TObject);
 begin
@@ -267,17 +410,6 @@ begin
   EdtGateway.Enabled   := not RdbAutomatic.IsChecked;
   EdtDnsServer.Enabled := not RdbAutomatic.IsChecked;
 end;
-
-procedure TFrmMainAdmin.RdbUnusedClick(Sender: TObject);
-begin
-  if not (CurrentUserRow in [0..9]) then
-    exit;
-
-  AdminData.UserMode[CurrentUserRow] := TCheckBox(Sender).Tag;
-  UpdateGridRow(CurrentUserRow);
-end;
-
-
 
 procedure TFrmMainAdmin.UpdateGridRow(Row: integer);
 begin

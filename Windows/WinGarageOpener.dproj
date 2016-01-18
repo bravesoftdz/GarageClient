@@ -106,18 +106,39 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="..\Forms\UntWinMainGarage.pas">
-            <Form>Form2</Form>
+            <Form>FrmMain</Form>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="..\Communication\UntArduinoCommunication.pas"/>
         <DCCReference Include="..\Interfaces\IntfGarageCommunication.pas"/>
-        <DCCReference Include="..\Interfaces\IntfMessageParser.pas"/>
-        <DCCReference Include="..\lib\XmlDocument\UntXmlMessageParser.pas"/>
-        <DCCReference Include="..\Data\ClientConfig.pas"/>
+        <DCCReference Include="..\Data\UntClientConfig.pas"/>
         <DCCReference Include="..\Data\ConfigConst.pas"/>
         <DCCReference Include="..\lib\SipHash\UntSipHash.pas"/>
         <DCCReference Include="..\Communication\CommunicationConst.pas"/>
         <DCCReference Include="..\Communication\UntCommand.pas"/>
+        <DCCReference Include="..\Communication\UntGetAssignment.pas"/>
+        <DCCReference Include="..\Forms\UntFrmGetAssigned.pas">
+            <Form>FrmGetAssignment</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
+        <DCCReference Include="..\Communication\UntClientSession.pas"/>
+        <DCCReference Include="..\Communication\UntCmdConnect.pas"/>
+        <DCCReference Include="..\Communication\UntSimpleCommand.pas"/>
+        <DCCReference Include="..\Interfaces\IntfMessageParser.pas"/>
+        <DCCReference Include="..\lib\XmlParser\LibXmlComps.pas"/>
+        <DCCReference Include="..\lib\XmlParser\LibXmlParser.pas"/>
+        <DCCReference Include="..\lib\XmlParser\UntMessageParser.pas"/>
+        <DCCReference Include="..\Data\UntIpAddress.pas"/>
+        <DCCReference Include="..\Communication\UntCommunicationFactory.pas"/>
+        <DCCReference Include="..\Communication\CommunicationTypes.pas"/>
+        <DCCReference Include="..\Communication\UntCommandParameter.pas"/>
+        <DCCReference Include="..\Data\UntArduinoAdminData.pas"/>
+        <DCCReference Include="..\Data\UntStringHasher.pas"/>
+        <DCCReference Include="..\Interfaces\IntfClientConfig.pas"/>
+        <DCCReference Include="..\Interfaces\IntfCommandHandler.pas"/>
+        <DCCReference Include="..\Communication\UntCmdGetStatus.pas"/>
+        <DCCReference Include="..\Communication\UntSimpleCommunication.pas"/>
+        <DCCReference Include="..\Communication\UntGarageCommunication.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -194,8 +215,10 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment>
-                <DeployFile LocalName="OSX32\Debug\WinGarageOpener" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="OSX32"/>
+                <DeployFile LocalName="OSX32\Debug\WinGarageOpener.entitlements" Configuration="Debug" Class="ProjectOSXEntitlements">
+                    <Platform Name="OSX32">
+                        <RemoteName>Entitlements.plist</RemoteName>
+                    </Platform>
                 </DeployFile>
                 <DeployFile LocalName="OSX32\Debug\WinGarageOpener.info.plist" Configuration="Debug" Class="ProjectOSXInfoPList">
                     <Platform Name="OSX32">
@@ -217,10 +240,8 @@
                         <RemoteName>WinGarageOpener.rsm</RemoteName>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="OSX32\Debug\WinGarageOpener.entitlements" Configuration="Debug" Class="ProjectOSXEntitlements">
-                    <Platform Name="OSX32">
-                        <RemoteName>Entitlements.plist</RemoteName>
-                    </Platform>
+                <DeployFile LocalName="OSX32\Debug\WinGarageOpener" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="OSX32"/>
                 </DeployFile>
                 <DeployClass Required="true" Name="DependencyPackage">
                     <Platform Name="iOSDevice">

@@ -4,57 +4,47 @@ interface
 
 uses
   System.SysUtils,
+  System.Classes,
   System.Generics.Collections,
-  UntSipHash,
   UntClientSession,
-  CommunicationConst;
+  UntSipHash,
+  UntStringHasher,
+  CommunicationTypes,
+  CommunicationConst,
+  UntCommandParameter;
 
 type
-  TCommandParameter = class
-  private
-    FName     : string;
-    FScope    : TParameterScope;
-    FValue    : string;
-    FIsVirtual: boolean;
-  public
-    constructor Create;
-    property Name       : string  read FName      write FName     ;
-    property ParamValue : string  read FValue     write FValue    ;
-    property IsVirtual  : boolean read FIsVirtual write FIsVirtual;
-    property Scope      : TParameterScope  read FScope  write FScope ;
-  end;
-
-
-  TCommandDict = TDictionary<String, TCommandParameter>;
-
 // Wrapper for compiling a command to be sent to arduino
 
   TCommand = class
   private
+    FStringHasher : TStringHasher;
+    FCommand: string;
     FCommandDictionary: TCommandDict;
+    FIsInitialized: boolean;
     function  GetSendString: string;
-    procedure AddHashData(var HashData : TData; Value: string);
-    function GetHashData: TData;
     function GetMessageIdx: word;
     function GetSessionId: cardinal;
     function GetUserId: word;
     function GetUserKey: word;
     function GetParamValue (Param : TCommandParameter) : string;
     function GetCommandHash: string;
+    procedure FillHashData;
   protected
-    property HashData          : TData        read GetHashData;
-
-    procedure InitSessionParams;
+    procedure AddSessionParams;
     procedure InitUserParams;
+    property StringHasher : TStringHasher read FStringHasher;
   public
     constructor Create;
-    destructor Destroy;
+    destructor Destroy; override;
 
     procedure Init; virtual;
 
     function AddParameter(Key: string; Value: cardinal; Scope : TParameterScope = psAll): TCommandParameter; overload;
     function AddParameter(Key: string; Value: string;   Scope : TParameterScope = psAll): TCommandParameter; overload;
     function AddVirtualParameter(Key: string; Scope : TParameterScope): TCommandParameter;
+
+    property Command    : string   read FCommand write FCommand;
 
     property SessionId  : cardinal read GetSessionId;
     property MessageIdx : word     read GetMessageIdx;
@@ -64,6 +54,7 @@ type
 
     property SendString        : string       read GetSendString;
     property CommandDictionary : TCommandDict read FCommandDictionary;
+    property IsInitialized     : boolean      read FIsInitialized;
 
   end;
 
@@ -74,6 +65,7 @@ implementation
 
 constructor TCommand.Create;
 begin
+  FStringHasher      := TStringHasher.Create;
   FCommandDictionary := TCommandDict.Create();
 end;
 
@@ -86,34 +78,41 @@ function TCommand.GetSendString: string;
 var
   Key : string;
   Param : TCommandParameter;
+  FirstParam : boolean;
 begin
-  result := '';
+  result := Self.Command;
+  if length(result) > 0 then
+    result := result + '?';
+  FirstParam := true;
+
   for Key in CommandDictionary.Keys do begin
     Param := CommandDictionary[Key];
     if Param.Scope = psHashOnly then
       continue;
-    if length(result) > 0 then
+    if FirstParam then
+      FirstParam := false
+    else
       result := result + '&';
-    result := result + Key + '=' + Param.ParamValue;
+    result := result + Key + '=' + GetParamValue(Param);
   end;
 end;
 
-function TCommand.GetHashData: TData;
+procedure TCommand.FillHashData;
 var
   Key : string;
   Param : TCommandParameter;
-  HashData : TData;
 begin
-  SetLength(HashData, 0);
+  StringHasher.Clear;
+
+  StringHasher.AddKeyValuePair(CParamCommand, Command);
+
   for Key in CommandDictionary.Keys do begin
     Param := CommandDictionary[Key];
     if Param.Scope = psCmdOnly then
       continue;
 
-    AddHashData(HashData, Key);
-    AddHashData(HashData, Param.ParamValue);
+    StringHasher.AddKeyValuePair(Key, GetParamValue(Param));
   end;
-  result := HashData;
 end;
 
 function TCommand.GetSessionId: cardinal;
@@ -133,10 +132,10 @@ end;
 
 procedure TCommand.Init;
 begin
-
+  FIsInitialized := true;
 end;
 
-procedure TCommand.InitSessionParams;
+procedure TCommand.AddSessionParams;
 begin
   AddVirtualParameter(CParamSessionId,  psHashOnly);
   AddVirtualParameter(CParamMessageIdx, psHashOnly);
@@ -151,16 +150,11 @@ end;
 
 function TCommand.GetCommandHash: string;
 var
-  Hash : uint64;
-  HashData : TData;
   HashKey  : TSipKey;
 begin
-  HashKey  := TClientSession.Instance.SipKey;
-  HashData := GetHashData;
-
-  Hash := TSipHash.Digest(HashKey, HashData);
-
-  result := IntToStr(Hash);
+  FillHashData;
+  HashKey := TClientSession.Instance.SipKey;
+  result  := StringHasher.GetHash(HashKey);
 end;
 
 function TCommand.GetMessageIdx: word;
@@ -182,28 +176,6 @@ begin
     result := IntToStr(MessageIdx)
   else if Param.Name = CParamCmdHash then
     result := CommandHash
-end;
-
-procedure TCommand.AddHashData(var HashData : TData; Value: string);
-var
-  ByteString : AnsiString;
-  HashDataPos : integer;
-  ValueLen    : integer;
-const
-  {$IFDEF ANDROID}
-  CFirstByte = 0;
-  {$ELSE}
-  CFirstByte = 1;
-  {$ENDIF ANDROID}
-
-begin
-  ByteString := Value;
-
-  ValueLen    := Length(ByteString);
-  HashDataPos := Length(HashData);
-  SetLength(HashData, HashDataPos + ValueLen);
-
-  Move(ByteString[CFirstByte], HashData[HashDataPos], ValueLen);
 end;
 
 function TCommand.AddParameter(Key: string; Value: cardinal; Scope : TParameterScope) : TCommandParameter;
@@ -232,12 +204,6 @@ begin
   result.IsVirtual := true;
 end;
 
-{ TCommandParameter }
-
-constructor TCommandParameter.Create;
-begin
-
-end;
 
 end.
 

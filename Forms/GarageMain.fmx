@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 465
+  ClientHeight = 508
   ClientWidth = 320
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -10,13 +10,13 @@ object Form1: TForm1
   OnCreate = FormCreate
   DesignerMobile = True
   DesignerWidth = 320
-  DesignerHeight = 465
+  DesignerHeight = 533
   DesignerDeviceName = 'Samsung Galaxy S2'
   DesignerOrientation = 0
   DesignerOSVersion = ''
   object GroupBox1: TGroupBox
     Align = alClient
-    Height = 465.000000000000000000
+    Height = 70.000000000000000000
     Text = 'Garage Status'
     Width = 320.000000000000000000
     TabOrder = 0

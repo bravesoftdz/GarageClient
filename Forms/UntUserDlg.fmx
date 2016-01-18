@@ -1,0 +1,148 @@
+object DlgUser: TDlgUser
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsSingle
+  Caption = 'Edit User'
+  ClientHeight = 200
+  ClientWidth = 288
+  Position = poMainFormCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Panel2: TPanel
+    Anchors = [akLeft, akTop, akRight]
+    Height = 154.000000000000000000
+    Position.X = 8.000000000000000000
+    Position.Y = 7.000000000000000000
+    Width = 274.000000000000000000
+    TabOrder = 0
+    object Label9: TLabel
+      Height = 17.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 8.000000000000000000
+      Text = 'Name'
+      Width = 120.000000000000000000
+    end
+    object EdtName: TEdit
+      Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+      TabOrder = 0
+      Position.X = 8.000000000000000000
+      Position.Y = 24.000000000000000000
+      Width = 100.000000000000000000
+      Height = 22.000000000000000000
+      KillFocusByReturn = False
+    end
+    object Label10: TLabel
+      Height = 17.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 104.000000000000000000
+      Text = 'Id'
+      Width = 120.000000000000000000
+    end
+    object Label11: TLabel
+      Height = 17.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 56.000000000000000000
+      Text = 'Password'
+      Width = 120.000000000000000000
+    end
+    object EdtPassword: TNumberBox
+      Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+      TabOrder = 1
+      Cursor = crIBeam
+      Max = 99999.000000000000000000
+      Value = 1000.000000000000000000
+      KeyboardType = vktDefault
+      Position.X = 8.000000000000000000
+      Position.Y = 72.000000000000000000
+      Width = 100.000000000000000000
+      Height = 22.000000000000000000
+      VertIncrement = 5.000000000000000000
+    end
+    object EdtId: TNumberBox
+      Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+      TabOrder = 2
+      Cursor = crIBeam
+      Max = 9999.000000000000000000
+      ReadOnly = True
+      KeyboardType = vktDefault
+      Position.X = 8.000000000000000000
+      Position.Y = 120.000000000000000000
+      Width = 100.000000000000000000
+      Height = 22.000000000000000000
+      VertIncrement = 5.000000000000000000
+    end
+    object Panel1: TGroupBox
+      Height = 89.000000000000000000
+      Position.X = 128.000000000000000000
+      Position.Y = 8.000000000000000000
+      Text = ' '
+      Width = 137.000000000000000000
+      TabOrder = 6
+      object RdbUnused: TRadioButton
+        GroupName = 'GrpUser'
+        Height = 19.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 16.000000000000000000
+        RotationCenter.X = 3.000000000000000000
+        RotationCenter.Y = 3.000000000000000000
+        TabOrder = 0
+        Text = 'Unused'
+        Width = 120.000000000000000000
+        OnClick = RdbAdminClick
+      end
+      object RdbUser: TRadioButton
+        Tag = 1
+        GroupName = 'GrpUser'
+        Height = 19.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 40.000000000000000000
+        RotationCenter.X = 21.000000000000000000
+        TabOrder = 1
+        Text = 'User'
+        Width = 120.000000000000000000
+        OnClick = RdbAdminClick
+      end
+      object RdbAdmin: TRadioButton
+        Tag = 2
+        GroupName = 'GrpUser'
+        Height = 19.000000000000000000
+        Position.X = 8.000000000000000000
+        Position.Y = 64.000000000000000000
+        TabOrder = 2
+        Text = 'Admin'
+        Width = 120.000000000000000000
+        OnClick = RdbAdminClick
+      end
+    end
+  end
+  object BtnCancel: TButton
+    Anchors = [akRight, akBottom]
+    Cancel = True
+    Height = 22.000000000000000000
+    ModalResult = 2
+    Position.X = 201.000000000000000000
+    Position.Y = 170.000000000000000000
+    TabOrder = 1
+    Text = 'Cancel'
+    Width = 80.000000000000000000
+  end
+  object BtnOK: TButton
+    Anchors = [akRight, akBottom]
+    Default = True
+    Height = 22.000000000000000000
+    ModalResult = 1
+    Position.X = 113.000000000000000000
+    Position.Y = 170.000000000000000000
+    TabOrder = 2
+    Text = 'OK'
+    Width = 80.000000000000000000
+  end
+end

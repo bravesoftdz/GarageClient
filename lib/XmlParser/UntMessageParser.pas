@@ -3,7 +3,9 @@ unit UntMessageParser;
 interface
 
 uses
-  System.SysUtils, System.Classes,
+  System.SysUtils, System.Classes, System.Contnrs,
+  CommunicationConst,
+  CommunicationTypes,
   LibXmlParser,
   IntfMessageParser;
 
@@ -11,21 +13,28 @@ type
   TMessageParser = class (TInterfacedObject, IMessageParser)
   private
     XmlParser : TXmlParser;
-    FXml      : Ansistring;
+    FXml      : AnsiString;
     function GetXml: String;
     procedure SetXml(const Value: String);
     function FindNext (NodeName: Ansistring) : boolean;
-    function GetStrAttribute(AttrName: AnsiString): AnsiString;
-    function GetIntAttribute(AttrName: AnsiString): integer;
     function XmlScan: boolean;
   protected
-    // Not used yet
+    FHasError   : boolean;
+    FError      : string;
+    FResult     : TReplyResult;
+    procedure Clear;
     function GetNextContent (NodeName: AnsiString) : AnsiString;
+    function GetStrAttribute(AttrName: AnsiString): AnsiString;
+    function GetIntAttribute(AttrName: AnsiString): integer;
   public
     constructor Create;
     destructor Destroy; override;
+    procedure  Parse(ResultData : TResultDictionary);
     function   FindNextValuePair (var Key, Value : string) : boolean;
-    procedure  StartScan;
+    function   FindNextNamedValuePair (var Key, Value : string; NodeName : string; AttributeName : string) : boolean;
+    function   TransferResult : TReplyResult;
+    function   HasError: boolean;
+    function   GetError: string;
     property   XML : String read GetXml write SetXml;
   end;
 
@@ -40,6 +49,13 @@ implementation
  }
 { TMessageParser }
 
+procedure TMessageParser.Clear;
+begin
+  FHasError   := false;
+  FError      := '';
+  FResult     := rrUnknown;
+end;
+
 constructor TMessageParser.create;
 begin
   XmlParser := TXmlParser.Create;
@@ -52,10 +68,15 @@ end;
 
 function TMessageParser.FindNextValuePair(var Key, Value: string): boolean;
 begin
+  result := FindNextNamedValuePair(Key, Value, CNodeData, CAttrId);
+end;
+
+function TMessageParser.FindNextNamedValuePair(var Key, Value: string; NodeName, AttributeName: string): boolean;
+begin
   result := false;
-  if FindNext (CDivLabel) then begin
-    Key := GetStrAttribute (CIdLabel);
-    Value := GetNextContent (CDivLabel);
+  if FindNext (NodeName) then begin
+    Key := GetStrAttribute (AttributeName);
+    Value := GetNextContent (NodeName);
     result := true;
   end;
 end;
@@ -79,6 +100,50 @@ end;
 function TMessageParser.GetXml: String;
 begin
   result := FXMl;
+end;
+
+function TMessageParser.GetError: string;
+begin
+  result := FError;
+end;
+
+function TMessageParser.HasError: boolean;
+begin
+  result := FHasError;
+end;
+
+procedure TMessageParser.Parse(ResultData : TResultDictionary);
+var
+  Key, Value : string;
+  ResultString : string;
+  ReplyResult : TReplyResult;
+begin
+  Clear;
+  ResultData.Clear;
+
+  XmlParser.StartScan;
+  while FindNextValuePair(Key, Value) do begin
+    ResultData.Add(Key, Value);
+  end;
+
+  XmlParser.StartScan;
+  if FindNextNamedValuePair(Key, Value, CNodeQueryResult, CAttrStatus) then begin
+    FError       := Value;
+    ResultString := Key;
+
+    for ReplyResult := low(TReplyResult) to High(TReplyResult) do
+      if SameText(CReplyResultKey[ReplyResult], ResultString) then begin
+        FResult := ReplyResult;
+        break;
+      end;
+
+    if FResult <> rrOK then
+      FHasError := true;
+  end
+  else begin
+    FHasError := true;
+    FError := 'Incomplete reply';
+  end;
 end;
 
 function TMessageParser.GetIntAttribute (AttrName : AnsiString) : integer;
@@ -109,11 +174,13 @@ procedure TMessageParser.SetXml(const Value: String);
 begin
   FXml := value;
   XmlParser.LoadFromBuffer (pAnsiChar(FXml));
+
+  XmlParser.StartScan;
 end;
 
-procedure TMessageParser.StartScan;
+function TMessageParser.TransferResult: TReplyResult;
 begin
-  XmlParser.StartScan;
+  result := FResult;
 end;
 
 function TMessageParser.XmlScan : boolean;

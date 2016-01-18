@@ -12,6 +12,9 @@
         <Projects Include="GarageAdmin.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="SipTest.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
     <Target Name="GarageAdmin:Make">
         <MSBuild Projects="GarageAdmin.dproj" Targets="Make"/>
     </Target>
+    <Target Name="SipTest">
+        <MSBuild Projects="SipTest.dproj"/>
+    </Target>
+    <Target Name="SipTest:Clean">
+        <MSBuild Projects="SipTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SipTest:Make">
+        <MSBuild Projects="SipTest.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="GarageOpener;WinGarageOpener;GarageAdmin"/>
+        <CallTarget Targets="GarageOpener;WinGarageOpener;GarageAdmin;SipTest"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="GarageOpener:Clean;WinGarageOpener:Clean;GarageAdmin:Clean"/>
+        <CallTarget Targets="GarageOpener:Clean;WinGarageOpener:Clean;GarageAdmin:Clean;SipTest:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="GarageOpener:Make;WinGarageOpener:Make;GarageAdmin:Make"/>
+        <CallTarget Targets="GarageOpener:Make;WinGarageOpener:Make;GarageAdmin:Make;SipTest:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

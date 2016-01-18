@@ -11,10 +11,14 @@ uses
   IdException,
   IntfGarageCommunication,
   IntfMessageParser,
-  UntXmlMessageParser,
+  UntArduinoCommunication,
   UntGarageCommunication;
 
 type
+  /// <summary>
+  /// Mobile device form for Garage opener
+  /// Not complete yet
+  /// </summary>
   TForm1 = class(TForm)
     GroupBox1: TGroupBox;
     EdtStatus: TEdit;

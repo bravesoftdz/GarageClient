@@ -2,11 +2,16 @@ unit UntArduinoAdminData;
 
 interface
 uses
-  System.Classes, System.SysUtils,
-  UntSipHash,
+  System.Classes, System.SysUtils, System.IniFiles,
+  UntSipHash, UntIpAddress,
   ConfigConst;
 
 type
+  /// <summary>
+  /// Record of configuration data
+  /// Refering to Version 1 of the data layout
+  /// Used to convert older files
+  /// </summary>
   TEepromConfigV1 = packed record
     startKey        : word;
     configVersion   : word;
@@ -17,6 +22,11 @@ type
     endKey          : word;
   end;
 
+  /// <summary>
+  /// Record of configuration data
+  /// Refering to Version 1 of the data layout
+  /// Used to convert older files
+  /// </summary>
   TEepromConfigV2 = packed record
     startKey        : word;
     configVersion   : word;
@@ -32,6 +42,10 @@ type
   end;
 
 
+  /// <summary>
+  /// Record of configuration data
+  /// Current version of the data layout
+  /// </summary>
   TEepromConfig = packed record
     startKey        : word;
     configVersion   : word;
@@ -47,78 +61,278 @@ type
     endKey          : word;
   end;
 
+  /// <summary>
+  /// Single user configuration record
+  /// </summary>
   TUserConfig = packed record
     userId   : word;
     userKey  : word;
     userMode : word;
   end;
 
-  TUsers = array [0..EE_USER_COUNT-1] of TUserConfig;
-  TUserNames = array [0..EE_USER_COUNT-1] of String[30];
+  TUsers       = array [0..EE_USER_COUNT-1] of TUserConfig;
+  TUserNames   = array [0..EE_USER_COUNT-1] of String[30];
+  TUserChanged = array [0..EE_USER_COUNT-1] of boolean;
+
+
+    /// <summary>
+    ///
+    /// </summary>
+  	/// <param name=""></param>
+  	/// <returns></returns>
+
 
 type
+  /// <summary>
+  ///
+  /// </summary>
   TArduinoAdminData = class
   private
+
+    /// <summary>
+    /// WiFi password
+    /// </summary>
     FWLanKey: string;
+
+    /// <summary>
+    /// Secret SIP key
+    /// </summary>
     FSipKey: TSipKey;
-    FIpAddress: cardinal;
+
+    /// <summary>
+    /// Password für Administrator - not used yet
+    /// </summary>
     FAdminPw: string;
+
+    /// <summary>
+    /// SSI of AP for Arduino WiFi device
+    /// </summary>
     FSSID: string;
+
+    /// <summary>
+    /// User/Device array
+    /// </summary>
     FUsers : TUsers;
+
+    /// <summary>
+    /// Flag showing that users are configured
+    /// </summary>
     FUsersAvailable : boolean;
-    FUserNames : array[0..EE_USER_COUNT-1] of string;
-    FDnsServer: cardinal;
-    FNetMask: cardinal;
-    FGateway: cardinal;
-    FUseDhcp: boolean;
-    FMacAddress: TMacAddress;
+
+    /// <summary>
+    /// List of user names referring to user array <seealso>Users</seealso>
+    /// </summary>
+    FUserNames   : array[0..EE_USER_COUNT-1] of string;
+
+    /// <summary>
+    /// List of changed users <seealso>Users</seealso>
+    /// </summary>
+    FUserChanged : TUserChanged;
+
+    /// <summary>
+    /// Fixed IP address for Arduino network device
+    /// </summary>
+    FIpAddress   : TIpAddress;
+
+    /// <summary>
+    /// Fixed DNS server address for Arduino network device
+    /// </summary>
+    FDnsServer   : TIpAddress;
+
+    /// <summary>
+    /// Network mask for fixed IP address on Arduino network device
+    /// </summary>
+    FNetMask     : TIpAddress;
+
+    /// <summary>
+    /// Gateway IP address for Arduino network device
+    /// </summary>
+    FGateway     : TIpAddress;
+
+    /// <summary>
+    /// Use DHCP - or fixed IP address on Arduino network device
+    /// </summary>
+    FUseDhcp     : boolean;
+
+    /// <summary>
+    /// MAC address of Arduino network device.
+    /// Only used for Ethershield so far
+    /// </summary>
+    FMacAddress  : TMacAddress;
+
+    /// <summary>
+    /// Load config from a Version 1 - File
+    /// </summary>
+  	/// <param name="Stream">Filestream of config file</param>
+    procedure LoadFromV1File (Stream : TFileStream);
+
+    /// <summary>
+    /// Load config from a Version 2 - File
+    /// </summary>
+  	/// <param name="Stream">Filestream of config file</param>
+    procedure LoadFromV2File(Stream: TFileStream);
+    /// <summary>
+    /// Check whether a user with the given ID has been configured
+    /// </summary>
+  	/// <param name="Id">Id of the user to look up</param>
+   	/// <returns>true, if the user is known</returns>
+    function  UserIdExists(Id: integer): boolean;
+  private
+    // Getters and Setters
     procedure SetAdminPw(const Value: string);
-    procedure SetIpAddress(const Value: cardinal);
     procedure SetSipKey(const Value: TSipKey);
     procedure SetSSID(const Value: string);
     procedure SetWLanKey(const Value: string);
-    function GetUserName(idx: integer): string;
-    procedure SetUserName(idx: integer; const Value: string);
-    function GetUserExists(idx: integer): boolean;
-    function GetUserState(idx: integer): string;
-    function GetUserId(idx: integer): integer;
-    function GetUserKey(idx: integer): integer;
-    procedure SetUserId(idx: integer; const Value: integer);
-    procedure SetUserKey(idx: integer; const Value: integer);
-    function GetUserMode(idx: integer): integer;
-    procedure SetUserMode(idx: integer; const Value: integer);
-    procedure SetDnsServer(const Value: cardinal);
-    procedure SetGateway(const Value: cardinal);
-    procedure SetNetMask(const Value: cardinal);
-    procedure LoadFromV1File (Stream : TFileStream);
-    procedure LoadFromV2File(Stream: TFileStream);
+    procedure SetUseDhcp(const Value: boolean);
     procedure SetMacAddress(const Value: TMacAddress);
+    function  GetMacAddressString: string;
+    procedure SetMacAddressString(const Value: string);
+
+    //User Getters/Setters
+    function  GetUserName(idx: integer): string;
+    procedure SetUserName(idx: integer; const Value: string);
+    function  GetUserExists(idx: integer): boolean;
+    function  GetUserLevel(idx: integer): string;
+    function  GetUserId(idx: integer): integer;
+    procedure SetUserId(idx: integer; const Value: integer);
+    function  GetUserKey(idx: integer): integer;
+    procedure SetUserKey(idx: integer; const Value: integer);
+    function  GetUserMode(idx: integer): integer;
+    procedure SetUserMode(idx: integer; const Value: integer);
+    function  GetUserChanged(idx: integer): boolean;
+    procedure SetUserChanged(idx: integer; const Value: boolean);
   public
     constructor Create;
     destructor Destroy; override;
+    // Save Load
+
+    /// <summary>
+    /// Save configuration to binary file
+    /// </summary>
+  	/// <param name="FileName">The file name</param>
     procedure SaveToFile (FileName : string);
+    /// <summary>
+    /// Load configuration from binary file
+    /// </summary>
+  	/// <param name="FileName">The file name</param>
     procedure LoadFromFile (FileName : string);
-    procedure CreateSipKey;
+    /// <summary>
+    /// Save configuration to ini file
+    /// </summary>
+  	/// <param name="IniFile">Ini file instance to use</param>
+    procedure SaveToIniFile (IniFile : TCustomIniFile);
+    /// <summary>
+    /// Load configuration from ini file
+    /// </summary>
+  	/// <param name="IniFile">Ini file instance to use</param>
+    procedure LoadFromIniFile (IniFile : TCustomIniFile);
 
-    property AdminPw   : string read FAdminPw write SetAdminPw;
-    property WLanKey   : string read FWLanKey write SetWLanKey;
-    property SSID      : string read FSSID write SetSSID;
-    property MacAddress: TMacAddress read FMacAddress write SetMacAddress;
-    property UseDhcp   : boolean read FUseDhcp write FUseDhcp;
-    property IpAddress : cardinal read FIpAddress write SetIpAddress;
-    property NetMask   : cardinal read FNetMask   write SetNetMask  ;
-    property Gateway   : cardinal read FGateway   write SetGateway  ;
-    property DnsServer : cardinal read FDnsServer write SetDnsServer;
-    property SipKey    : TSipKey read FSipKey write SetSipKey;
+    // Generate Values
+    /// <summary>
+    /// Generate a random SipKey
+    /// </summary>
+    procedure GenerateSipKey;
+    /// <summary>
+    /// Generate a random MAC address for a Ethershield
+    /// </summary>
+    procedure GenerateMacAddress;
+    /// <summary>
+    /// Generate a random user id
+    /// </summary>
+    function  GenerateUserid  : integer;
 
-    property UsersAvailable : boolean read FUsersAvailable;
-    property Users          : TUsers read FUsers;
-    property UserName  [idx : integer] : string  read GetUserName write SetUserName;
-    property UserId    [idx : integer] : integer read GetUserId write SetUserId;
-    property UserKey   [idx : integer] : integer read GetUserKey write SetUserKey;
-    property UserMode  [idx : integer] : integer read GetUserMode write SetUserMode;
-    property UserState [idx : integer] : string  read GetUserState;
-    property UserExists[idx : integer] : boolean read GetUserExists;
+    /// <summary>
+    /// Password für Administrator - not used yet
+    /// </summary>
+    property AdminPw          : string read FAdminPw write SetAdminPw;
+    /// <summary>
+    /// WiFi password
+    /// </summary>
+    property WLanKey          : string read FWLanKey write SetWLanKey;
+    /// <summary>
+    /// SSI of AP for Arduino WiFi device
+    /// </summary>
+    property SSID             : string read FSSID write SetSSID;
+    /// <summary>
+    /// MAC address of Arduino network device.
+    /// Only used for Ethershield so far
+    /// </summary>
+    property MacAddress       : TMacAddress read FMacAddress write SetMacAddress;
+    /// <summary>
+    /// Use DHCP - or fixed IP address on Arduino network device
+    /// </summary>
+    property UseDhcp          : boolean read FUseDhcp write SetUseDhcp;
+    /// <summary>
+    /// Fixed IP address for Arduino network device
+    /// </summary>
+    property IpAddress        : TIpAddress read FIpAddress write FIpAddress;
+    /// <summary>
+    /// Network mask for fixed IP address on Arduino network device
+    /// </summary>
+    property NetMask          : TIpAddress read FNetMask   write FNetMask  ;
+    /// <summary>
+    /// Gateway IP address for Arduino network device
+    /// </summary>
+    property Gateway          : TIpAddress read FGateway   write FGateway  ;
+    /// <summary>
+    /// Fixed DNS server address for Arduino network device
+    /// </summary>
+    property DnsServer        : TIpAddress read FDnsServer write FDnsServer;
+    /// <summary>
+    /// Secret SIP key
+    /// </summary>
+    property SipKey           : TSipKey  read FSipKey    write SetSipKey;
+    /// <summary>
+    /// MAC address of Arduino network device - as string.
+    /// </summary>
+    property MacAddressString : string read GetMacAddressString write SetMacAddressString;
+
+    /// <summary>
+    /// Flag showing that users are configured
+    /// </summary>
+    property UsersAvailable   : boolean read FUsersAvailable;
+
+    /// <summary>
+    /// User/Device array
+    /// </summary>
+    property Users            : TUsers read FUsers;
+
+
+    /// <summary>
+    /// User name
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserName        [idx : integer] : string  read GetUserName    write SetUserName;
+    /// <summary>
+    /// User ID number
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserId          [idx : integer] : integer read GetUserId      write SetUserId;
+    /// <summary>
+    /// User password
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserKey         [idx : integer] : integer read GetUserKey     write SetUserKey;
+    /// <summary>
+    /// User level (Admin/User/None) as integer value
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserMode        [idx : integer] : integer read GetUserMode    write SetUserMode;
+    /// <summary>
+    /// User level (Admin/User/None) as integer
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserLevel       [idx : integer] : string  read GetUserLevel;
+    /// <summary>
+    /// True, if user has been defined
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserExists      [idx : integer] : boolean read GetUserExists;
+    /// <summary>
+    /// True, if user has been changed before last saving
+    /// </summary>
+  	/// <param name="idx">List index of user</param>
+    property UserChanged     [idx : integer] : boolean read GetUserChanged write SetUserChanged;
   end;
 
 (*
@@ -142,16 +356,20 @@ implementation
 constructor TArduinoAdminData.Create;
 begin
   SipKey := TSipKey.create();
-end;
-
-procedure TArduinoAdminData.CreateSipKey;
-begin
-
+  FIpAddress := TIpAddress.Create;
+  FIpAddress.Force := true;
+  FNetMask   := TIpAddress.Create;
+  FGateway   := TIpAddress.Create;
+  FDnsServer := TIpAddress.Create;
 end;
 
 destructor TArduinoAdminData.Destroy;
 begin
-  SipKey.Free;
+  FSipKey.Free;
+  FIpAddress.Free;
+  FNetMask.Free;
+  FGateway.Free;
+  FDnsServer.Free;
 end;
 
 procedure TArduinoAdminData.LoadFromFile(FileName: string);
@@ -174,16 +392,18 @@ begin
     if ReadSize <> SizeOf(Config)  then
       raise Exception.Create('Config size mismatch');
 
+     // Check keys first and eventually load from previous version files
     if (Config.startKey <> EE_CONFIG_START_KEY) or (Config.endKey <> EE_CONFIG_END_KEY) then begin
       HasConfig := false;
       if (Config.startKey = EE_CONFIG_START_KEY) and (Config.configVersion = 1) then
         LoadFromV1File (Stream)
-      else if (Config.startKey = EE_CONFIG_START_KEY) and (Config.configVersion = 1) then
+      else if (Config.startKey = EE_CONFIG_START_KEY) and (Config.configVersion = 2) then
         LoadFromV2File (Stream)
       else
         raise Exception.Create('Config mismatch');
     end;
 
+    // Load user records
     if Stream.Size - Stream.Position >= SizeOf(TUsers) then begin
       ReadSize := Stream.Read(FUsers, SizeOf(TUsers));
 
@@ -197,6 +417,7 @@ begin
 
       FUsersAvailable := true;
 
+      // add user names
       if Stream.Size - Stream.Position >= SizeOf(TUserNames) then begin
         ReadSize := Stream.Read(UserNames, SizeOf(TUserNames));
         if ReadSize <> SizeOf(TUserNames)  then
@@ -212,6 +433,8 @@ begin
   finally
     Stream.Free;
   end;
+
+  // Initialize data, if no config was found
   if Hasconfig then begin
 
     StrData := @Config.wlanKey;
@@ -220,13 +443,86 @@ begin
     StrData := @Config.ssid;
     FSSID := StrData;
 
-    FUseDhcp   := Config.useDHCP;
-    FIpAddress := Config.IpAddress;
-    FNetMask   := Config.NetMask  ;
-    FGateway   := Config.Gateway  ;
-    FDnsServer := Config.DnsServer;
-    FMacAddress:= Config.MacAddress;
+    FUseDhcp           := Config.useDHCP;
+    FIpAddress.Address := Config.IpAddress;
+    FNetMask.Address   := Config.NetMask  ;
+    FGateway.Address   := Config.Gateway  ;
+    FDnsServer.Address := Config.DnsServer;
+    FMacAddress        := Config.MacAddress;
     SipKey.CopyFrom(Config.sipKey);
+  end;
+end;
+
+procedure TArduinoAdminData.LoadFromIniFile(IniFile: TCustomIniFile);
+var
+  n : integer;
+  Mode : integer;
+  UserSect : string;
+  Valid    : boolean;
+begin
+  // Check, if ini file contains valid data
+  Valid               := IniFile.ReadBool  (SectAdmin,   KeyValidData, false);
+  if not Valid then
+    exit;
+
+  AdminPw             := IniFile.ReadString(SectAdmin,   KeyPassword,  '');
+  WLanKey             := IniFile.ReadString(SectArduino, KeyWLanKey   ,'');
+  SSID                := IniFile.ReadString(SectArduino, KeySSID      ,'');
+  MacAddressString    := IniFile.ReadString(SectArduino, KeyMacAddress,'');
+  UseDhcp             := IniFile.ReadBool  (SectArduino, KeyUseDhcp, false);
+  IpAddress.AsString  := IniFile.ReadString(SectArduino, KeyIpAddress,'');
+  NetMask.AsString    := IniFile.ReadString(SectArduino, KeyNetMask  ,'');
+  Gateway.AsString    := IniFile.ReadString(SectArduino, KeyGateway  ,'');
+  DnsServer.AsString  := IniFile.ReadString(SectArduino, KeyDnsServer,'');
+  SipKey.AsString     := IniFile.ReadString(SectArduino, KeySipKey,   '');
+
+  for n := 0 to EE_USER_COUNT - 1 do begin
+    Mode := IniFile.ReadInteger(SectUsers, SectUser + IntToStr(n + 1), 0);
+    if Mode > 0 then begin
+      UserSect := SectUser + IntToStr(n);
+      UserId[n]   := IniFile.ReadInteger(UserSect, KeyUserId, 0);
+      UserKey[n]  := IniFile.ReadInteger(UserSect, KeyKey, 0);
+      UserMode[n] := Mode; //IniFile.ReadInteger(UserSect, KeyMode, 0);
+      UserName[n] := IniFile.ReadString (UserSect, KeyName, '');
+    end
+    else begin
+      UserId[n]   := 0;
+      UserMode[n] := 0;
+    end;
+  end;
+end;
+
+procedure TArduinoAdminData.SaveToIniFile(IniFile: TCustomIniFile);
+var
+  n : integer;
+  Mode     : integer;
+  UserSect : string;
+begin
+  // Set valid data flag in file first
+  IniFile.WriteBool  (SectAdmin,   KeyValidData, true              );
+  IniFile.WriteString(SectAdmin,   KeyPassword,  AdminPw           );
+  IniFile.WriteString(SectArduino, KeyWLanKey,   WLanKey           );
+  IniFile.WriteString(SectArduino, KeySSID,      SSID              );
+  IniFile.WriteString(SectArduino, KeyMacAddress,MacAddressString  );
+  IniFile.WriteBool  (SectArduino, KeyUseDhcp,   UseDhcp           );
+  IniFile.WriteString(SectArduino, KeyIpAddress, IpAddress.AsString);
+  IniFile.WriteString(SectArduino, KeyNetMask,   NetMask.AsString  );
+  IniFile.WriteString(SectArduino, KeyGateway,   Gateway.AsString  );
+  IniFile.WriteString(SectArduino, KeyDnsServer, DnsServer.AsString);
+  IniFile.WriteString(SectArduino, KeySipKey,    SipKey.AsString   );
+
+  for n := 0 to EE_USER_COUNT - 1 do begin
+    Mode := UserMode[n];
+    UserSect := SectUser + IntToStr(n);
+    IniFile.WriteInteger(SectUsers, SectUser + IntToStr(n + 1), Mode);
+    if Mode > 0 then begin
+      IniFile.WriteInteger(UserSect, KeyUserId,UserId[n]);
+      IniFile.WriteInteger(UserSect, KeyKey,   UserKey[n] );
+      IniFile.WriteInteger(UserSect, KeyMode,  UserMode[n]);
+      IniFile.WriteString (UserSect, KeyName,  UserName[n]);
+    end
+    else
+      IniFile.EraseSection(UserSect);
   end;
 end;
 
@@ -252,10 +548,10 @@ begin
   FSSID := StrData;
 
   FUseDhcp   := false;
-  FIpAddress := Config.IpAddress;
-  FNetMask   := 0;
-  FGateway   := 0;
-  FDnsServer := 0;
+  FIpAddress.Address := Config.IpAddress;
+  FNetMask.Address   := 0;
+  FGateway.Address   := 0;
+  FDnsServer.Address := 0;
 
   FillChar(FMacAddress, 0, SizeOf(FMacAddress));
 
@@ -283,11 +579,11 @@ begin
   StrData := @Config.ssid;
   FSSID := StrData;
 
-  FUseDhcp   := Config.useDHCP;
-  FIpAddress := Config.IpAddress;
-  FNetMask   := Config.netMask;
-  FGateway   := Config.gateway;
-  FDnsServer := Config.dnsServer;
+  FUseDhcp           := Config.useDHCP;
+  FIpAddress.Address := Config.IpAddress;
+  FNetMask.Address   := Config.netMask;
+  FGateway.Address   := Config.gateway;
+  FDnsServer.Address := Config.dnsServer;
 
   SipKey.CopyFrom(Config.sipKey);
 end;
@@ -313,14 +609,14 @@ begin
   StrData := SSID;
   Move (StrData[1], Config.ssid, Length(StrData) + 1);
 
-  Move (SipKey.Key, Config.sipKey, SizeOf (TKey));
+  Move (SipKey.Key, Config.SipKey, SizeOf (TKey));
 
-  Config.useDHCP   := UseDhcp;
-  Config.IpAddress := IpAddress;
-  Config.NetMask   := NetMask  ;
-  Config.Gateway   := Gateway  ;
-  Config.DnsServer := DnsServer;
-  Config.macAddress:= MacAddress;
+  Config.useDHCP     := UseDhcp;
+  Config.IpAddress   := FIpAddress.Address;
+  Config.netMask     := FNetMask.Address  ;
+  Config.gateway     := FGateway.Address  ;
+  Config.dnsServer   := FDnsServer.Address;
+  Config.MacAddress  := MacAddress;
 
   Stream := TFileStream.Create(FileName, fmCreate);
   try
@@ -335,8 +631,10 @@ begin
     end;
 
     FillChar(UserNames, SizeOf(TUserNames), 0);
-    for i := 0 to EE_USER_COUNT-1 do
+    for i := 0 to EE_USER_COUNT-1 do begin
       UserNames[i] := self.UserName[i];
+
+    end;
 
     Stream.Write(UserNames, SizeOf(TUserNames));
 
@@ -350,29 +648,65 @@ begin
   FAdminPw := Value;
 end;
 
-procedure TArduinoAdminData.SetDnsServer(const Value: cardinal);
-begin
-  FDnsServer := Value;
-end;
-
-procedure TArduinoAdminData.SetGateway(const Value: cardinal);
-begin
-  FGateway := Value;
-end;
-
-procedure TArduinoAdminData.SetIpAddress(const Value: cardinal);
-begin
-  FIpAddress := Value;
-end;
-
 procedure TArduinoAdminData.SetMacAddress(const Value: TMacAddress);
 begin
   FMacAddress := Value;
 end;
 
-procedure TArduinoAdminData.SetNetMask(const Value: cardinal);
+procedure TArduinoAdminData.GenerateSipKey;
 begin
-  FNetMask := Value;
+  SipKey.Generate;
+end;
+
+function TArduinoAdminData.GenerateUserid: integer;
+begin
+  repeat
+    result := random(9998) + 1;
+  until not UserIdExists(result);
+end;
+
+procedure TArduinoAdminData.SetMacAddressString(const Value: string);
+var
+  n : integer;
+  ByptePos : integer;
+  part : string;
+begin
+  if length(Value) <> 17 then
+    raise Exception.Create('MAC Address format error: xx-xx-xx-xx-xx-xx');
+
+  ByptePos := 1;
+  for n := 0 to EE_MAC_KEY_SIZE-1 do begin
+    part := '$' + Copy(Value, ByptePos, 2);
+    inc (ByptePos, 3);
+
+    FMacAddress[n] := StrToInt(part);
+  end;
+end;
+
+procedure TArduinoAdminData.GenerateMacAddress;
+const
+  GEHO_Prefix : array [0..2] of byte = ($90, $A2, $DA);
+var
+  n: Integer;
+begin
+  for n := 0 to  5 do begin
+    case n of
+      0..2 : FMacAddress[n] := GEHO_Prefix[n];
+      3..4 : FMacAddress[n] := Random(255);
+         5 : FMacAddress[n] := Random(255) and $FE{Individual} or $02{Local};
+    end;
+  end;
+end;
+
+function TArduinoAdminData.GetMacAddressString: string;
+var
+  n : integer;
+begin
+  for n := 0 to EE_MAC_KEY_SIZE-1 do
+    if n = 0 then
+      result := IntToHex(MacAddress[n], 2)
+    else
+      result := result + '-' + IntToHex(MacAddress[n], 2);
 end;
 
 procedure TArduinoAdminData.SetSipKey(const Value: TSipKey);
@@ -383,6 +717,14 @@ end;
 procedure TArduinoAdminData.SetSSID(const Value: string);
 begin
   FSSID := Value;
+end;
+
+function TArduinoAdminData.GetUserChanged(idx: integer): boolean;
+begin
+  if idx in [0..9] then
+    result := FUserChanged[Idx]
+  else
+    result := false;
 end;
 
 function TArduinoAdminData.GetUserExists(idx: integer): boolean;
@@ -407,6 +749,19 @@ begin
 
 end;
 
+function TArduinoAdminData.UserIdExists(Id : integer) : boolean;
+var
+  i : integer;
+begin
+  for i := 0 to EE_USER_COUNT-1 do
+    if UserId[i] = Id then begin
+      result := true;
+      exit;
+    end;
+
+  result := false;
+end;
+
 function TArduinoAdminData.GetUserMode(idx: integer): integer;
 begin
   if idx in [0..9] then
@@ -414,6 +769,20 @@ begin
   else
     result := 0;
 
+end;
+
+procedure TArduinoAdminData.SetUseDhcp(const Value: boolean);
+begin
+  FUseDhcp := Value;
+  NetMask.Force := Value;
+  Gateway.Force := Value;
+  DnsServer.Force := Value;
+end;
+
+procedure TArduinoAdminData.SetUserChanged(idx: integer; const Value: boolean);
+begin
+  if idx in [0..9] then
+    FUserChanged[Idx] := Value;
 end;
 
 procedure TArduinoAdminData.SetUserId(idx: integer; const Value: integer);
@@ -444,7 +813,7 @@ begin
     result := '';
 end;
 
-function TArduinoAdminData.GetUserState(idx: integer): string;
+function TArduinoAdminData.GetUserLevel(idx: integer): string;
 begin
   if idx in [0..9] then
     case FUsers[Idx].userMode of
@@ -466,5 +835,26 @@ procedure TArduinoAdminData.SetWLanKey(const Value: string);
 begin
   FWLanKey := Value;
 end;
+
+{ // Yet unused
+    FDeviceNames : array[0..EE_USER_COUNT-1] of string;
+
+function TArduinoAdminData.GetDeviceName(idx: integer): string;
+begin
+  if idx in [0..9] then
+    result := FDeviceNames[idx]
+  else
+    result := '';
+end;
+
+procedure TArduinoAdminData.SetDeviceName(idx: integer; const Value: string);
+begin
+  if idx <= 9 then
+    FDeviceNames[idx] := Value;
+end;
+
+}
+
+
 
 end.

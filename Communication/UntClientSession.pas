@@ -30,7 +30,8 @@ type
     class function Instance : TClientSession;
     procedure Init (UserId : integer; SipKey : TSipKey);
     procedure Clear;
-    procedure StartSession(SessionId : string; UserPassword : integer);
+    procedure ClearSession;
+    procedure StartSession(SessionId : string; UserPassword : integer = -1);
     procedure PrepareNextMessage;
 
     property SipKey       : TSipKey read FSipKey;
@@ -97,31 +98,39 @@ end;
 
 procedure TClientSession.Init(UserId: integer; SipKey: TSipKey);
 begin
-  FUserId := SessionId;
+  FUserId := UserId;
   FSipKey := SipKey;
+  FInitialized := true;
 end;
 
 procedure TClientSession.Clear;
 begin
+  ClearSession;
+  FUserPassword := 0;
+end;
+
+procedure TClientSession.ClearSession;
+begin
   FHasSession   := false;
   FSessionId    := 0;
   FMessageIdx   := 0;
-  FUserPassword := 0;
 end;
 
 procedure TClientSession.PrepareNextMessage;
 begin
-  if HasSession then
-    Inc(FMessageIdx)
-  else
-    raise ESessionInitError.Create('Invalid session: Cannot prepare next message');
+  Inc(FMessageIdx);
+//  else
+//    raise ESessionInitError.Create('Invalid session: Cannot prepare next message');
 end;
 
-procedure TClientSession.StartSession(SessionId: string; UserPassword : integer);
+procedure TClientSession.StartSession(SessionId: string; UserPassword : integer = -1);
 begin
   FHasSession   := true;
-  FUserPassword := UserPassword;
-  FSessionId    := FSessionId;
+  FSessionId    := StrToIntDef(SessionId, 0);
+  FMessageIdx   := 0;
+
+  if UserPassword >= 0 then
+    FUserPassword := UserPassword;
 end;
 
 end.
